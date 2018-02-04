@@ -5,4 +5,4 @@ from .resources import Analysis
 app = Flask(__name__)
 api = Api(app)
 
-api.add_resource(Analysis, '/', '/Analysis')
+api.add_resource(Analysis, '/Analysis')
