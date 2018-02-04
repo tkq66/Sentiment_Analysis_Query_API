@@ -3,6 +3,7 @@
 Author: Teekayu Klongtruajrok
 """
 from flask_restful import Resource, reqparse
+from common import twitter_api
 
 
 class Analysis(Resource):
