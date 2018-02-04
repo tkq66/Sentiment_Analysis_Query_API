@@ -20,7 +20,7 @@ class Analysis(Resource):
                                  type=str,
                                  help='Query phrase invalid.')
         # Query parameters
-        self.query_count = 5
+        self.query_count = 10
         self.tweet_mode = 'extended'
         self.filter_query = ' AND '.join([
             '-filter:retweets',
@@ -33,17 +33,127 @@ class Analysis(Resource):
         """GET Method retrieving sentiment analysis of a query phrase."""
         args = self.parser.parse_args()
         query_phrase = args['query_phrase']
-        raw_query = 'q={}{}&count={}&tweet_mode={}'.format(query_phrase,
-                                                           self.filter_query,
-                                                           self.query_count,
-                                                           self.tweet_mode)
-        encoded_query = quote_plus(raw_query, safe="&=")
-        query_results = twitter_api.GetSearch(raw_query=encoded_query)
-        local_result = [self.__map_tweets_to_local(result) for result in query_results]
-        return local_result
+        data_list = self.__construct_data_source(query_phrase)
+        data_grouping = self.__group_text_by_sentiment(data_list)
+        return data_grouping
+
+    def __group_text_by_sentiment(self, data_list):
+        """Group text data according to different sentiment categories.
+
+        Args:
+            data_list: A list of dict of local text data. Formatting as follows:
+                [
+                    {
+                        'id': <tweet id>,
+                        'text': <tweet text>,
+                        'user': <twitter user id>,
+                        'timestamp': <tweeted date>,
+                        'polarity': <tweet sentiment>
+                    }
+                    ...
+                ]
+
+        Returns:
+            A dict of list of local text data, grouped by sentiment categories.
+            Formatting as follows:
+                {
+                    '1': [
+                        {
+                            'id': <tweet id>,
+                            'text': <tweet text>,
+                            'user': <twitter user id>,
+                            'timestamp': <tweeted date>,
+                            'polarity': <tweet sentiment>
+                        }
+                        ...
+                    ],
+                    '0': ...
+                    '-1': ...
+                }
+
+        """
+        text_grouping = {}
+        for data in data_list:
+            sentiment_category = self.__categorize_sentiment_polarity(data['polarity'])
+            text_grouping[sentiment_category] = text_grouping.get(sentiment_category, []) + [data]
+        return text_grouping
+
+    def __categorize_sentiment_polarity(self, polarity):
+        """Round the text polarity to either '1', '0', or '-1'.
+
+        Args:
+            polarity: A float indicating text polarity.
+
+        Returns:
+            An int indicating 3 different sentiment categories:
+                1 - positive sentiment, if polarity is greater than 0
+                0 - neutral sentiment, if polarity is equal to 0
+                -1 - negative sentiment, if polarity is lesser than 0
+
+        """
+        return 1 if polarity > 0 else -1 if polarity < 0 else 0
+
+    def __construct_data_source(self, query_phrase):
+        """Build a local data object for the queried text data.
+
+        Args:
+            query_phrase: A string of phrase to search Tweets with.
+
+        Returns:
+            A list of dict of locally processable data. Formatting as follows:
+                [
+                    {
+                        'id': <tweet id>,
+                        'text': <tweet text>,
+                        'user': <twitter user id>,
+                        'timestamp': <tweeted date>,
+                        'polarity': <tweet sentiment>
+                    }
+                    ...
+                ]
+
+        """
+        return [self.__map_tweets_to_local(result)
+                for result
+                in self.__fetch_tweets(query_phrase)]
+
+    def __fetch_tweets(self, query_phrase):
+        """Get twitter search results.
+
+        Args:
+            query_phrase: A string of phrase to search Tweets with.
+
+        Returns:
+            A list of twitter.Status objects for all the tweet search results.
+
+        """
+        return twitter_api.GetSearch(raw_query=self.__construct_twitter_search_query(query_phrase))
+
+    def __construct_twitter_search_query(self, query_phrase):
+        """Build a Twitter search query.
+
+        Query is based on the search phrase, search count, tweet mode to fetch,
+        and elements to filter in or out.
+
+        Args:
+            query_phrase: A string of phrase to search Tweets with.
+
+        Returns:
+            A string of url encoded query string that satisfies the Twitter
+            search syntax.
+
+        """
+        return quote_plus('q={}'
+                          '{}'
+                          '&count={}'
+                          '&tweet_mode={}'.format(query_phrase,
+                                                  self.filter_query,
+                                                  self.query_count,
+                                                  self.tweet_mode),
+                          safe="&=")
 
     def __map_tweets_to_local(self, tweet_status):
-        """Map twitter.Status object to relevant dict.
+        """Map twitter.Status object to relevant dict and calculate sentiment polarity.
 
         Args:
             tweet_status: A twitter.Status object storing tweet data.
@@ -54,15 +164,19 @@ class Analysis(Resource):
                     'id': <tweet id>,
                     'text': <tweet text>,
                     'user': <twitter user id>,
-                    'timestamp': <tweeted date>
+                    'timestamp': <tweeted date>,
+                    'polarity': <tweet sentiment>
                 }
 
         """
+        tweet_text = tweet_status.full_text
+        tweet_polarity = TextBlob(tweet_text).sentiment.polarity
         return {
             'id': tweet_status.id_str,
-            'text': tweet_status.full_text,
+            'text': tweet_text,
             'user': tweet_status.user.screen_name,
-            'timestamp': tweet_status.created_at
+            'timestamp': tweet_status.created_at,
+            'polarity': tweet_polarity
         }
 
     def __clean_tweet(self, tweet):
