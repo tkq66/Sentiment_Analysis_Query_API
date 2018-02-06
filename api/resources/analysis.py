@@ -24,26 +24,22 @@ class Analysis(Resource):
             query_phrase: A string of phrase to search Tweets with.
 
         Returns:
-            A dict of list of text data, grouped by sentiment categories.
-            Formatting as follows:
-                {
-                    '1': [
-                        {
-                            'id': <tweet id>,
-                            'text': <tweet text>,
-                            'user': <twitter user id>,
-                            'timestamp': <tweeted date>,
-                            'polarity': <tweet sentiment>
-                        }
-                        ...
-                    ],
-                    '0': ...
-                    '-1': ...
-                }
+            A list of text data. Formatting as follows:
+                [
+                    {
+                        'id': <tweet id>,
+                        'text': <tweet text>,
+                        'user': <twitter user id>,
+                        'timestamp': <tweeted date>,
+                        'polarity': <tweet sentiment>
+                    }
+                    ...
+                ]
 
         """
         args = self.parser.parse_args()
         query_phrase = args['query_phrase']
+        print('Querying...')
         data_list = analysis_business_logic.construct_data_source(query_phrase)
-        data_grouping = analysis_business_logic.group_text_by_sentiment(data_list)
-        return data_grouping
+        print('Querying successful: {} tweets'.format(len(data_list)))
+        return data_list
