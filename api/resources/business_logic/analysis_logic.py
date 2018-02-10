@@ -32,7 +32,9 @@ class AnalysisLogic:
                     {
                         'id': <tweet id>,
                         'text': <tweet text>,
-                        'user': <twitter user id>,
+                        'user_handle': <twitter user id>,
+                        'user_name': <twitter user name>,
+                        'user_img_url': <user profile image url>
                         'timestamp': <tweeted date>,
                         'polarity': <tweet sentiment>
                     }
@@ -47,7 +49,9 @@ class AnalysisLogic:
                         {
                             'id': <tweet id>,
                             'text': <tweet text>,
-                            'user': <twitter user id>,
+                            'user_handle': <twitter user id>,
+                            'user_name': <twitter user name>,
+                            'user_img_url': <user profile image url>
                             'timestamp': <tweeted date>,
                             'polarity': <tweet sentiment>
                         }
@@ -76,7 +80,9 @@ class AnalysisLogic:
                     {
                         'id': <tweet id>,
                         'text': <tweet text>,
-                        'user': <twitter user id>,
+                        'user_handle': <twitter user id>,
+                        'user_name': <twitter user name>,
+                        'user_img_url': <user profile image url>
                         'timestamp': <tweeted date>,
                         'polarity': <tweet sentiment>
                     }
@@ -149,7 +155,9 @@ class AnalysisLogic:
                 {
                     'id': <tweet id>,
                     'text': <tweet text>,
-                    'user': <twitter user id>,
+                    'user_handle': <twitter user id>,
+                    'user_name': <twitter user name>,
+                    'user_img_url': <user profile image url>,
                     'timestamp': <tweeted date>,
                     'polarity': <tweet sentiment>
                 }
@@ -160,7 +168,9 @@ class AnalysisLogic:
         return {
             'id': tweet_status.id_str,
             'text': tweet_text,
-            'user': tweet_status.user.screen_name,
+            'user_handle': tweet_status.user.screen_name,
+            'user_name': tweet_status.user.name,
+            'user_img_url': tweet_status.user.profile_image_url,
             'timestamp': tweet_status.created_at,
             'polarity': tweet_polarity
         }

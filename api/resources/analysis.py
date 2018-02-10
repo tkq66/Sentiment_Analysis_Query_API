@@ -29,7 +29,9 @@ class Analysis(Resource):
                     {
                         'id': <tweet id>,
                         'text': <tweet text>,
-                        'user': <twitter user id>,
+                        'user_handle': <twitter user id>,
+                        'user_name': <twitter user name>,
+                        'user_img_url': <user profile image url>
                         'timestamp': <tweeted date>,
                         'polarity': <tweet sentiment>
                     }
